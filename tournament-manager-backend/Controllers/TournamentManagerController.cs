@@ -16,7 +16,7 @@ namespace tournament_manager_backend.Controllers
         {
             try
             {
-                string query = "select * from dbo.TOURNAMENTS";
+                string query = "select * from dbo.Tournaments";
                 DataTable table = new DataTable();
                 string sqlDatasource = Environment.GetEnvironmentVariable("TournamentAppDBCon") ?? throw new InvalidOperationException("Connection string 'TournamentAppDBCon' is not configured.");
                 Console.WriteLine($"Connecting to: {sqlDatasource}");
