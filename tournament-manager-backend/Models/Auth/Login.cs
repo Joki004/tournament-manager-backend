@@ -1,4 +1,4 @@
-﻿namespace tournament_manager_backend.Models
+﻿namespace tournament_manager_backend.Models.Auth
 {
     public class Login
     {

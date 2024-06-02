@@ -2,11 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using tournament_manager_backend.Data;
 using tournament_manager_backend.helpers;
-using tournament_manager_backend.Models;
+using tournament_manager_backend.Models.Auth;
 
 namespace tournament_manager_backend.Controllers
 {
-    
+
     [ApiController]
     public class AuthController : Controller
     {
@@ -19,7 +19,7 @@ namespace tournament_manager_backend.Controllers
         }
 
         [HttpPost]
-        [Route("Register")]
+        [Route("register")]
         public IActionResult RegisterUser([FromBody] SystemUser newUser)
         {
             try
@@ -37,9 +37,25 @@ namespace tournament_manager_backend.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("isTokenValid")]
+        public IActionResult IsTokenValid([FromBody] TokenRequest request)
+        {
+            try
+            {
+                bool isValid = _authHelpers.IsTokenValid(request.Token);
+                return Ok(new { status = 200, isValid });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in IsTokenValid: {ex.Message}");
+                return StatusCode(500, new { status = 500, isValid = false, message = "Internal server error" });
+            }
+        }
+
 
         [HttpPost]
-        [Route("Login")]
+        [Route("login")]
         public IActionResult Login(Login logins)
         {
             try

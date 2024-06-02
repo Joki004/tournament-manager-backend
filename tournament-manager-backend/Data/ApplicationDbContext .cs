@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using tournament_manager_backend.Models;
+using tournament_manager_backend.Models.Auth;
 
 namespace tournament_manager_backend.Data
 {

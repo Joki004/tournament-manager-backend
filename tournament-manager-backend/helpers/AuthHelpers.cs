@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using tournament_manager_backend.Models;
 using tournament_manager_backend.Data;
+using tournament_manager_backend.Models.Auth;
 namespace tournament_manager_backend.helpers
 {
     public class AuthHelpers
@@ -40,7 +41,7 @@ namespace tournament_manager_backend.helpers
 
         public bool AuthenticateUser(string userNameOrEmail, string password)
         {
-            // Check if user exists based on UserName or Email
+
             var user = _dbContext.Users.FirstOrDefault(u =>
                 u.UserName == userNameOrEmail || u.Email == userNameOrEmail);
 
@@ -49,7 +50,6 @@ namespace tournament_manager_backend.helpers
                 return false; // User not found
             }
 
-            // Validate password - You should implement your own password validation logic here
             bool isPasswordValid = VerifyPasswordHash(password, user.PasswordHash);
 
             return isPasswordValid;
@@ -66,13 +66,14 @@ namespace tournament_manager_backend.helpers
             return BCrypt.Net.BCrypt.Verify(password, storedHash);
         }
 
+
         public string GenerateJWTToken(SystemUser user)
         {
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName)
-            };
+                {
+            new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+            new Claim(ClaimTypes.Name, user.UserName)
+                };
 
             var jwtToken = new JwtSecurityToken(
                 claims: claims,
@@ -80,11 +81,36 @@ namespace tournament_manager_backend.helpers
                 expires: DateTime.UtcNow.AddHours(3),
                 signingCredentials: new SigningCredentials(
                     new SymmetricSecurityKey(
-                       Encoding.UTF8.GetBytes(_jwtSecret)
-                        ),
-                    SecurityAlgorithms.HmacSha256Signature)
-                );
+                        Encoding.UTF8.GetBytes(_jwtSecret)
+                    ),
+                    SecurityAlgorithms.HmacSha256Signature
+                )
+            );
+
             return new JwtSecurityTokenHandler().WriteToken(jwtToken);
+        }
+
+        public bool IsTokenValid(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_jwtSecret);
+            try
+            {
+                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
