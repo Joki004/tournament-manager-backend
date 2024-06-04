@@ -1,45 +1,69 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Data.SqlClient;
-
+using tournament_manager_backend.Data;
+using tournament_manager_backend.Models.tournament;
 namespace tournament_manager_backend.Controllers
 {
-    [Route("[controller]")]
+
     [ApiController]
     public class TournamentManagerController : ControllerBase
     {
+        private readonly ApplicationDbContext _dbContext;
 
+        public TournamentManagerController(ApplicationDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
         [HttpGet]
         [Route("Tournaments")]
-        public IActionResult GetTournaments()
+        //[Authorize]
+        public async Task<IActionResult> GetTournaments()
         {
             try
             {
-                string query = "select * from dbo.Tournaments";
-                DataTable table = new DataTable();
-                string sqlDatasource = Environment.GetEnvironmentVariable("TournamentAppDBCon") ?? throw new InvalidOperationException("Connection string 'TournamentAppDBCon' is not configured.");
-                Console.WriteLine($"Connecting to: {sqlDatasource}");
-
-                using (SqlConnection myCon = new SqlConnection(sqlDatasource))
+                var tournaments = await _dbContext.Tournaments
+                     .Select(t => new TournamentDto
+                     {
+                         TournamentID = t.TournamentID,
+                         UserID = t.UserID,
+                         TournamentName = t.TournamentName,
+                         DisciplineID = t.DisciplineID,
+                         TournamentTypeID = t.TournamentTypeID,
+                         NumberOfTeams = t.NumberOfTeams,
+                         StartDate = t.StartDate,
+                         EndDate = t.EndDate,
+                         WinnerTeamID = t.WinnerTeamID,
+                         CreatedAt = t.CreatedAt
+                     }).ToListAsync();
+                var response = new ApiResponseTournament
                 {
-                    myCon.Open();
-                    using (SqlCommand myCommand = new SqlCommand(query, myCon))
-                    {
-                        using (SqlDataReader myReader = myCommand.ExecuteReader())
-                        {
-                            table.Load(myReader);
-                        }
-                    }
-                }
-
-                return new JsonResult(table);
+                    Status = 200,
+                    IsSuccess = true,
+                    Message = "Tournaments fetched successfully",
+                    Table = tournaments
+                };
+                return Ok(response);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception in GetTournaments: {ex}");
-                throw;
+                var errorResponse = new ApiResponseTournament
+                {
+                    Status = 500,
+                    IsSuccess = false,
+                    Message = "Internal server error",
+                    Table = null
+                };
+                return StatusCode(500, errorResponse);
             }
         }
+
+
+
+
     }
 }

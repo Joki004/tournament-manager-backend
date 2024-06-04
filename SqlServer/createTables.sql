@@ -173,6 +173,31 @@ CREATE TABLE RoundRobinMatches (
 GO
 
 
-SELECT * FROM USERS;
+SELECT * FROM Tournaments;
 
 DELETE  FROM USERS WHERE UserName = 'joki_004'
+
+
+-- Sample data for Disciplines table
+INSERT INTO Disciplines (DisciplineName, Description, PlayersPerTeam)
+VALUES ('Football', 'Description for Football', 11),
+       ('Basketball', 'Description for Basketball', 5),
+       ('Tennis', 'Description for Tennis', 1);
+
+
+INSERT INTO TournamentTypes (TournamentTypeName, Description)
+VALUES ('Single Elimination', 'Description for Single Elimination'),
+       ('Round Robin', 'Description for Round Robin');
+
+
+INSERT INTO Teams (TournamentID, TeamName, MatchesPlayed)
+VALUES (2, 'Team A', 0),
+       (2, 'Team B', 0),
+       (3, 'Team C', 0);
+
+	   INSERT INTO Tournaments (UserID, TournamentName, DisciplineID, TournamentTypeID, NumberOfTeams, StartDate, EndDate, WinnerTeamID, CreatedAt )
+VALUES ('2E110C63-4713-452C-9841-6DB141C038DA', 'Football Tournament', 1, 1, 2, '2024-06-01', NULL, NULL,GETDATE()),
+       ('2E110C63-4713-452C-9841-6DB141C038DA', 'Basketball Tournament', 2, 2, 1, '2024-06-01', NULL, NULL,GETDATE());
+
+
+	   --2E110C63-4713-452C-9841-6DB141C038DA

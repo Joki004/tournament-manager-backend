@@ -1,7 +1,10 @@
-﻿namespace tournament_manager_backend.Models.Auth
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace tournament_manager_backend.Models.Auth
 {
     public class TokenRequest
     {
-        public string Token { get; set; }
+        [Required]
+        public string Token { get; set; } = string.Empty;
     }
 }

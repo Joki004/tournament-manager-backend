@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using tournament_manager_backend.Data;
 using tournament_manager_backend.helpers;
@@ -27,8 +28,17 @@ namespace tournament_manager_backend.Controllers
                 _authHelpers.RegisterUser(newUser);
                 string jwtToken = _authHelpers.GenerateJWTToken(newUser);
 
-                
-                return Ok(new { status = 200, isSuccess = true, message = "User Login successfully", UserDetails = newUser, token = jwtToken });
+                var userDetails = new
+                {
+                    UserId = newUser.UserId,
+                    Email = newUser.Email,
+                    UserName = newUser.UserName,
+                    // Add ProfilePicture if you have it
+                    // ProfilePicture = newUser.ProfilePicture
+                };
+
+
+                return Ok(new { status = 200, isSuccess = true, message = "User Login successfully", UserDetails = userDetails, token = jwtToken });
             }
             catch (Exception ex)
             {
@@ -43,13 +53,54 @@ namespace tournament_manager_backend.Controllers
         {
             try
             {
-                bool isValid = _authHelpers.IsTokenValid(request.Token);
-                return Ok(new { status = 200, isValid });
+                var (isValid, user) = _authHelpers.IsTokenValid(request.Token);
+                return Ok(new { status = 200, isValid, user });
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception in IsTokenValid: {ex.Message}");
                 return StatusCode(500, new { status = 500, isValid = false, message = "Internal server error" });
+            }
+        }
+
+        [HttpGet]
+        [Route("user")]
+        [Authorize]
+        public IActionResult GetUser(string userID)
+        {
+            try
+            {
+                // Check if the userID is provided
+                if (string.IsNullOrWhiteSpace(userID))
+                {
+                    return BadRequest(new { status = 400, isSuccess = false, message = "User ID is required" });
+                }
+
+                // Find the user by userID
+                var user = _dbContext.Users.FirstOrDefault(u => u.UserId.ToString() == userID);
+
+                // Check if the user exists
+                if (user == null)
+                {
+                    return NotFound(new { status = 404, isSuccess = false, message = "User not found" });
+                }
+
+                // Create a response object with necessary user information
+                var userDetails = new
+                {
+                    UserId = user.UserId,
+                    Email = user.Email,
+                    UserName = user.UserName,
+                    // Include other necessary fields, e.g., ProfilePicture
+                    // ProfilePicture = user.ProfilePicture
+                };
+
+                return Ok(new { status = 200, isSuccess = true, userDetails });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in GetUser: {ex.Message}");
+                return StatusCode(500, new { status = 500, isSuccess = false, message = "Internal server error" });
             }
         }
 
@@ -68,27 +119,30 @@ namespace tournament_manager_backend.Controllers
                     return Unauthorized(new { status = 401, isSuccess = false, message = "Invalid credentials" });
                 }
 
-               
-               
-
                 if (!_authHelpers.VerifyPasswordHash(logins.Password, user.PasswordHash))
                 {
                     return Unauthorized(new { status = 401, isSuccess = false, message = "Invalid credentials" });
                 }
+
                 SystemUser systemUser = new SystemUser
                 {
                     UserId = user.UserId,
                     UserName = user.UserName,
                     Email = user.Email,
-                    
-                
                 };
-                
+
                 string jwtToken = _authHelpers.GenerateJWTToken(systemUser);
 
-               
-                return Ok(new { status = 200, isSuccess = true, message = "User Login successfully", UserDetails = user, token = jwtToken });
+                var UserDetails = new
+                {
+                    UserId = user.UserId,
+                    Email = user.Email,
+                    UserName = user.UserName,
+                    // Include other necessary fields, e.g., ProfilePicture
+                    // ProfilePicture = user.ProfilePicture
+                };
 
+                return Ok(new { status = 200, isSuccess = true, message = "User Login successfully", UserDetails, token = jwtToken });
             }
             catch (Exception ex)
             {
@@ -96,6 +150,7 @@ namespace tournament_manager_backend.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error during login");
             }
         }
+
 
     }
 }
